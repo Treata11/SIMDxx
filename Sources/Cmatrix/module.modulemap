@@ -1,0 +1,4 @@
+module matrix_h {
+    header "../../matrix.h"
+    export *
+}
