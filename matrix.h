@@ -78,15 +78,15 @@ SIMD_DEFINE_VEC_TYPE(simd_double, 4)
 
 // MARK: - Matrices
 
-simd_half4x4 SIMD_CFUNC simd_scale(const simd_half3 &v);
-simd_float4x4 SIMD_CFUNC simd_scale(const simd_float3 &v);
-simd_double4x4 SIMD_CFUNC simd_scale(const simd_double3 &v);
+simd_half4x4 SIMD_CFUNC simd_scale(const simd_half3 *v);
+simd_float4x4 SIMD_CFUNC simd_scale(const simd_float3 *v);
+simd_double4x4 SIMD_CFUNC simd_scale(const simd_double3 *v);
 
 // TODO: float4x4_scale_aniso
 
-simd_half4x4 SIMD_CFUNC simd_translate(const simd_half3 &v);
-simd_float4x4 SIMD_CFUNC simd_translate(const simd_float3 &v);
-simd_double4x4 SIMD_CFUNC simd_translate(const simd_double3 &v);
+simd_half4x4 SIMD_CFUNC simd_translate(const simd_half3 *v);
+simd_float4x4 SIMD_CFUNC simd_translate(const simd_float3 *v);
+simd_double4x4 SIMD_CFUNC simd_translate(const simd_double3 *v);
 
 // TODO: float4x4_translate_in_place
 
@@ -137,81 +137,120 @@ void SIMD_CFUNC simd_float4x4_orthonormalize(simd_float4x4 R, simd_float4x4 cons
 
 namespace simd {
 
-SIMD_CPPFUNC half4x4 scale(const half3 &v) { return ::simd_scale(v); };
-SIMD_CPPFUNC float4x4 scale(const float3 &v) { return ::simd_scale(v); };
-SIMD_CPPFUNC double4x4 scale(const double3 &v) { return ::simd_scale(v); };
+    SIMD_CPPFUNC half4x4 scale(const half3 &v)
+    {
+        return simd_matrix((half4) { v.x,   0,   0, 0 },
+                           (half4) {   0, v.y,   0, 0 },
+                           (half4) {   0,   0, v.z, 0 },
+                           (half4) {   0,   0,   0, 1 });
+    }
+    SIMD_CPPFUNC float4x4 scale(const float3 &v)
+    {
+        return simd_matrix((float4) { v.x,   0,   0, 0 },
+                           (float4) {   0, v.y,   0, 0 },
+                           (float4) {   0,   0, v.z, 0 },
+                           (float4) {   0,   0,   0, 1 });
+    }
+    double4x4 scale(const double3 &v)
+    {
+        return simd_matrix((double4) { v.x,   0,   0, 0 },
+                           (double4) {   0, v.y,   0, 0 },
+                           (double4) {   0,   0, v.z, 0 },
+                           (double4) {   0,   0,   0, 1 });
+    }
 
-SIMD_CPPFUNC half4x4 makeTranslate(const half3 &v) { return ::simd_translate(v); };
-SIMD_CPPFUNC float4x4 translate(const float3 &v) { return ::simd_translate(v); };
-SIMD_CPPFUNC double4x4 translate(const double3 &v) { return ::simd_translate(v); };
+    SIMD_CPPFUNC half4x4 translate(const half3 &v)
+    {
+        const half4 col0 = { 1.0f, 0.0f, 0.0f, 0.0f };
+        const half4 col1 = { 0.0f, 1.0f, 0.0f, 0.0f };
+        const half4 col2 = { 0.0f, 0.0f, 1.0f, 0.0f };
+        const half4 col3 = {  v.x,  v.y,  v.z, 1.0f };
+        return simd_matrix(col0, col1, col2, col3);
+    }
+    SIMD_CPPFUNC float4x4 translate(const float3 &v)
+    {
+        const float4 col0 = { 1.0f, 0.0f, 0.0f, 0.0f };
+        const float4 col1 = { 0.0f, 1.0f, 0.0f, 0.0f };
+        const float4 col2 = { 0.0f, 0.0f, 1.0f, 0.0f };
+        const float4 col3 = {  v.x,  v.y,  v.z, 1.0f };
+        return simd_matrix(col0, col1, col2, col3);
+    }
+    SIMD_CPPFUNC double4x4 translate(const double3 &v)
+    {
+        const double4 col0 = { 1.0f, 0.0f, 0.0f, 0.0f };
+        const double4 col1 = { 0.0f, 1.0f, 0.0f, 0.0f };
+        const double4 col2 = { 0.0f, 0.0f, 1.0f, 0.0f };
+        const double4 col3 = {  v.x,  v.y,  v.z, 1.0f };
+        return simd_matrix(col0, col1, col2, col3);
+    }
 
 
 
-SIMD_CPPFUNC half4x4 xRotate(simd_half1 angleRadians) { return ::simd_xRotate(angleRadians); }
-SIMD_CPPFUNC float4x4 xRotate(float angleRadians) { return ::simd_xRotate(angleRadians); }
-SIMD_CPPFUNC double4x4 xRotate(double angleRadians) { return ::simd_xRotate(angleRadians); }
+    SIMD_CPPFUNC half4x4 xRotate(simd_half1 angleRadians) { return ::simd_xRotate(angleRadians); }
+    SIMD_CPPFUNC float4x4 xRotate(float angleRadians) { return ::simd_xRotate(angleRadians); }
+    SIMD_CPPFUNC double4x4 xRotate(double angleRadians) { return ::simd_xRotate(angleRadians); }
 
-SIMD_CPPFUNC half4x4 yRotate(simd_half1 angleRadians) { return ::simd_yRotate(angleRadians); }
-SIMD_CPPFUNC float4x4 yRotate(float angleRadians) { return ::simd_yRotate(angleRadians); }
-SIMD_CPPFUNC double4x4 yRotate(double angleRadians) { return ::simd_yRotate(angleRadians); }
+    SIMD_CPPFUNC half4x4 yRotate(simd_half1 angleRadians) { return ::simd_yRotate(angleRadians); }
+    SIMD_CPPFUNC float4x4 yRotate(float angleRadians) { return ::simd_yRotate(angleRadians); }
+    SIMD_CPPFUNC double4x4 yRotate(double angleRadians) { return ::simd_yRotate(angleRadians); }
 
-SIMD_CPPFUNC half4x4 zRotate(simd_half1 angleRadians) { return ::simd_zRotate(angleRadians); }
-SIMD_CPPFUNC float4x4 zRotate(float angleRadians) { return ::simd_zRotate(angleRadians); }
-SIMD_CPPFUNC double4x4 zRotate(double angleRadians) { return ::simd_zRotate(angleRadians); }
+    SIMD_CPPFUNC half4x4 zRotate(simd_half1 angleRadians) { return ::simd_zRotate(angleRadians); }
+    SIMD_CPPFUNC float4x4 zRotate(float angleRadians) { return ::simd_zRotate(angleRadians); }
+    SIMD_CPPFUNC double4x4 zRotate(double angleRadians) { return ::simd_zRotate(angleRadians); }
 
-SIMD_CPPFUNC void simd_float4x4_orthonormalize(simd_float4x4 R, simd_float4x4 const M) { return ::simd_float4x4_orthonormalize(R, M); };
+    SIMD_CPPFUNC void simd_float4x4_orthonormalize(simd_float4x4 R, simd_float4x4 const M) { return ::simd_float4x4_orthonormalize(R, M); };
 
 }
 
 extern "C" {
 #endif /* __cplusplus */
 
-#pragma mark - Implementation
+#pragma mark - C Implementation
 
-simd_half4x4 SIMD_CFUNC simd_scale(const simd_half3 &v)
+simd_half4x4 SIMD_CFUNC simd_scale(const simd_half3 *v)
 {
-    return simd_matrix((simd_half4) { v.x,   0,   0, 0 },
-                       (simd_half4) {   0, v.y,   0, 0 },
-                       (simd_half4) {   0,   0, v.z, 0 },
-                       (simd_half4) {   0,   0,   0, 1 });
+    return simd_matrix((simd_half4) { v->x,   0,   0, 0 },
+                       (simd_half4) {   0, v->y,   0, 0 },
+                       (simd_half4) {   0,   0, v->z, 0 },
+                       (simd_half4) {   0,   0,   0,  1 });
 }
-simd_float4x4 SIMD_CFUNC simd_scale(const simd_float3 &v)
+simd_float4x4 SIMD_CFUNC simd_scale(const simd_float3 *v)
 {
-    return simd_matrix((simd_float4) { v.x,   0,   0, 0 },
-                       (simd_float4) {   0, v.y,   0, 0 },
-                       (simd_float4) {   0,   0, v.z, 0 },
-                       (simd_float4) {   0,   0,   0, 1 });
+    return simd_matrix((simd_float4) { v->x,   0,   0, 0 },
+                       (simd_float4) {   0, v->y,   0, 0 },
+                       (simd_float4) {   0,   0, v->z, 0 },
+                       (simd_float4) {   0,   0,   0,  1 });
 }
-simd_double4x4 SIMD_CFUNC simd_scale(const simd_double3 &v)
+simd_double4x4 SIMD_CFUNC simd_scale(const simd_double3 *v)
 {
-    return simd_matrix((simd_double4) { v.x,   0,   0, 0 },
-                       (simd_double4) {   0, v.y,   0, 0 },
-                       (simd_double4) {   0,   0, v.z, 0 },
-                       (simd_double4) {   0,   0,   0, 1 });
+    return simd_matrix((simd_double4) { v->x,    0,    0, 0 },
+                       (simd_double4) {    0, v->y,    0, 0 },
+                       (simd_double4) {    0,    0, v->z, 0 },
+                       (simd_double4) {    0,    0,    0, 1 });
 }
 
-simd_half4x4 SIMD_CFUNC simd_translate(const simd_half3 &v)
+simd_half4x4 SIMD_CFUNC simd_translate(const simd_half3 *v)
 {
     const simd_half4 col0 = { 1.0f, 0.0f, 0.0f, 0.0f };
     const simd_half4 col1 = { 0.0f, 1.0f, 0.0f, 0.0f };
     const simd_half4 col2 = { 0.0f, 0.0f, 1.0f, 0.0f };
-    const simd_half4 col3 = { v.x,   v.y,  v.z, 1.0f };
+    const simd_half4 col3 = { v->x, v->y, v->z, 1.0f };
     return simd_matrix(col0, col1, col2, col3);
 }
-simd_float4x4 SIMD_CFUNC simd_translate(const simd_float3 &v)
+simd_float4x4 SIMD_CFUNC simd_translate(const simd_float3 *v)
 {
     const simd_float4 col0 = { 1.0f, 0.0f, 0.0f, 0.0f };
     const simd_float4 col1 = { 0.0f, 1.0f, 0.0f, 0.0f };
     const simd_float4 col2 = { 0.0f, 0.0f, 1.0f, 0.0f };
-    const simd_float4 col3 = { v.x, v.y, v.z, 1.0f };
+    const simd_float4 col3 = { v->x, v->y, v->z, 1.0f };
     return simd_matrix(col0, col1, col2, col3);
 }
-simd_double4x4 SIMD_CFUNC simd_translate(const simd_double3 &v)
+simd_double4x4 SIMD_CFUNC simd_translate(const simd_double3 *v)
 {
     const simd_double4 col0 = { 1.0f, 0.0f, 0.0f, 0.0f };
     const simd_double4 col1 = { 0.0f, 1.0f, 0.0f, 0.0f };
     const simd_double4 col2 = { 0.0f, 0.0f, 1.0f, 0.0f };
-    const simd_double4 col3 = { v.x, v.y, v.z, 1.0f };
+    const simd_double4 col3 = { v->x, v->y, v->z, 1.0f };
     return simd_matrix(col0, col1, col2, col3);
 }
 
@@ -310,4 +349,3 @@ void SIMD_CFUNC simd_float4x4_orthonormalize(simd_float4x4 R, simd_float4x4 cons
 #ifdef __cplusplus
 }
 #endif
-
