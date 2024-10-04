@@ -114,7 +114,9 @@ simd_half4x4 SIMD_CFUNC simd_half4x4_frustum(simd_half4x4 M, simd_half1 l, simd_
 simd_float4x4 SIMD_CFUNC simd_float4x4_frustum(simd_float4x4 M, float l, float r, float b, float t, float n, float f);
 simd_double4x4 SIMD_CFUNC simd_double4x4_frustum(simd_double4x4 M, double l, double r, double b, double t, double n, double f);
 
-// TODO: float4x4_ortho
+simd_half4x4 SIMD_CFUNC simd_half4x4_ortho(simd_half4x4 M, simd_half1 l, simd_half1 r, simd_half1 b, simd_half1 t, simd_half1 n, simd_half1 f);
+simd_float4x4 SIMD_CFUNC simd_float4x4_ortho(simd_float4x4 M, float l, float r, float b, float t, float n, float f);
+simd_double4x4 SIMD_CFUNC simd_double4x4_ortho(simd_double4x4 M, double l, double r, double b, double t, double n, double f);
 
 simd_half4x4 SIMD_CFUNC simd_perspective(simd_half1 fovYRadians, simd_half1 aspectRatio, simd_half1 nearPlane, simd_half1 farPlane);
 simd_float4x4 SIMD_CFUNC simd_perspective(float fovYRadians, float aspectRatio, float nearPlane, float farPlane);
@@ -169,18 +171,28 @@ namespace simd {
     SIMD_CPPFUNC float4x4 zRotate(float angleRadians) { return ::simd_zRotate(angleRadians); }
     SIMD_CPPFUNC double4x4 zRotate(double angleRadians) { return ::simd_zRotate(angleRadians); }
 
-    SIMD_CPPFUNC half3x3 simd_half4x4_orthonormalize(half4x4 M) { return ::simd_half4x4_orthonormalize(M); };
-    SIMD_CPPFUNC float3x3 simd_float4x4_orthonormalize(float4x4 M) { return ::simd_float4x4_orthonormalize(M); };
-    SIMD_CPPFUNC double3x3 simd_double4x4_orthonormalize(double4x4 M) { return ::simd_double4x4_orthonormalize(M); };
+    SIMD_CPPFUNC half3x3 half4x4_orthonormalize(half4x4 M) { return ::simd_half4x4_orthonormalize(M); };
+    SIMD_CPPFUNC float3x3 float4x4_orthonormalize(float4x4 M) { return ::simd_float4x4_orthonormalize(M); };
+    SIMD_CPPFUNC double3x3 double4x4_orthonormalize(double4x4 M) { return ::simd_double4x4_orthonormalize(M); };
 
-    SIMD_CPPFUNC half4x4 simd_half4x4_frustum(half4x4 M, half1 l, half1 r, half1 b, half1 t, half1 n, half1 f) {
+    SIMD_CPPFUNC half4x4 half4x4_frustum(half4x4 M, half1 l, half1 r, half1 b, half1 t, half1 n, half1 f) {
         return ::simd_half4x4_frustum(M, l, r, b, t, n, f);
     };
-    SIMD_CPPFUNC float4x4 simd_float4x4_frustum(float4x4 M, float l, float r, float b, float t, float n, float f) {
+    SIMD_CPPFUNC float4x4 float4x4_frustum(float4x4 M, float l, float r, float b, float t, float n, float f) {
         return ::simd_float4x4_frustum(M, l, r, b, t, n, f);
     };
-    SIMD_CPPFUNC double4x4 simd_double4x4_frustum(double4x4 M, double l, double r, double b, double t, double n, double f) {
+    SIMD_CPPFUNC double4x4 double4x4_frustum(double4x4 M, double l, double r, double b, double t, double n, double f) {
         return ::simd_double4x4_frustum(M, l, r, b, t, n, f);
+    };
+
+    SIMD_CPPFUNC half4x4 half4x4_ortho(half4x4 M, half1 l, half1 r, half1 b, half1 t, half1 n, half1 f) {
+        return ::simd_half4x4_ortho(M, l, r, b, t, n, f);
+    };
+    SIMD_CPPFUNC float4x4 float4x4_ortho(float4x4 M, float l, float r, float b, float t, float n, float f) {
+        return ::simd_float4x4_ortho(M, l, r, b, t, n, f);
+    };
+    SIMD_CPPFUNC double4x4 double4x4_ortho(double4x4 M, double l, double r, double b, double t, double n, double f) {
+        return ::simd_double4x4_ortho(M, l, r, b, t, n, f);
     };
 
     SIMD_CPPFUNC half4x4 perspective(half1 fovYRadians, half1 aspectRatio, half1 nearPlane, half1 farPlane) {
@@ -466,7 +478,7 @@ simd_double3x3 SIMD_CFUNC simd_double4x4_orthonormalize(simd_double4x4 M)
     return R;
 }
 
-// TODO: Tests
+// TODO: Tests; Different sizes
 simd_half4x4 SIMD_CFUNC simd_half4x4_frustum(simd_half4x4 M, simd_half1 l, simd_half1 r, simd_half1 b, simd_half1 t, simd_half1 n, simd_half1 f)
 {
     M.columns[0].x = 2.0f * n / (r-l);
@@ -518,6 +530,71 @@ simd_double4x4 SIMD_CFUNC simd_double4x4_frustum(simd_double4x4 M, double l, dou
     
     M.columns[3].z = -2.0f * (f*n) / (f-n);
     M.columns[3].x = M.columns[3].y = M.columns[3].a = 0.0f;
+    
+    return M;
+}
+
+// TODO: Tests; Different sizes
+simd_half4x4 SIMD_CFUNC simd_half4x4_ortho(simd_half4x4 M, simd_half1 l, simd_half1 r, simd_half1 b, simd_half1 t, simd_half1 n, simd_half1 f)
+{
+    M.columns[0].x = 2.0f / (r-l);
+    M.columns[0].y = M.columns[0].z = M.columns[0].a = 0.0f;
+
+    M.columns[1].y = 2.0f / (t-b);
+    M.columns[1].x = M.columns[1].z = M.columns[1].a = 0.0f;
+    
+    M.columns[1].y = 2.0f / (t-b);
+    M.columns[1].x = M.columns[1].z = M.columns[1].a = 0.0f;
+
+    M.columns[2].z = -2.0f / (f-n);
+    M.columns[2].x = M.columns[2].y = M.columns[2].a = 0.0f;
+    
+    M.columns[3].x = -(r+l) / (r-l);
+    M.columns[3].y = -(t+b) / (t-b);
+    M.columns[3].z = -(f+n) / (f-n);
+    M.columns[3].a = 1.0f;
+    
+    return M;
+}
+simd_float4x4 SIMD_CFUNC simd_float4x4_ortho(simd_float4x4 M, float l, float r, float b, float t, float n, float f)
+{
+    M.columns[0].x = 2.0f / (r-l);
+    M.columns[0].y = M.columns[0].z = M.columns[0].a = 0.0f;
+
+    M.columns[1].y = 2.0f / (t-b);
+    M.columns[1].x = M.columns[1].z = M.columns[1].a = 0.0f;
+    
+    M.columns[1].y = 2.0f / (t-b);
+    M.columns[1].x = M.columns[1].z = M.columns[1].a = 0.0f;
+
+    M.columns[2].z = -2.0f / (f-n);
+    M.columns[2].x = M.columns[2].y = M.columns[2].a = 0.0f;
+    
+    M.columns[3].x = -(r+l) / (r-l);
+    M.columns[3].y = -(t+b) / (t-b);
+    M.columns[3].z = -(f+n) / (f-n);
+    M.columns[3].a = 1.0f;
+    
+    return M;
+}
+simd_double4x4 SIMD_CFUNC simd_double4x4_ortho(simd_double4x4 M, double l, double r, double b, double t, double n, double f)
+{
+    M.columns[0].x = 2.0f / (r-l);
+    M.columns[0].y = M.columns[0].z = M.columns[0].a = 0.0f;
+
+    M.columns[1].y = 2.0f / (t-b);
+    M.columns[1].x = M.columns[1].z = M.columns[1].a = 0.0f;
+    
+    M.columns[1].y = 2.0f / (t-b);
+    M.columns[1].x = M.columns[1].z = M.columns[1].a = 0.0f;
+
+    M.columns[2].z = -2.0f / (f-n);
+    M.columns[2].x = M.columns[2].y = M.columns[2].a = 0.0f;
+    
+    M.columns[3].x = -(r+l) / (r-l);
+    M.columns[3].y = -(t+b) / (t-b);
+    M.columns[3].z = -(f+n) / (f-n);
+    M.columns[3].a = 1.0f;
     
     return M;
 }
