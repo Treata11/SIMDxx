@@ -106,9 +106,13 @@ simd_half4x4 SIMD_CFUNC simd_zRotate(simd_half1 tangleRadians);
 simd_float4x4 SIMD_CFUNC simd_zRotate(float angleRadians);
 simd_double4x4 SIMD_CFUNC simd_zRotate(double angleRadians);
 
-simd_float4x4 SIMD_CFUNC simd_float4x4_orthonormalize(simd_float4x4 M);
+simd_half3x3 SIMD_CFUNC simd_half4x4_orthonormalize(simd_half4x4 M);
+simd_float3x3 SIMD_CFUNC simd_float4x4_orthonormalize(simd_float4x4 M);
+simd_double3x3 SIMD_CFUNC simd_double4x4_orthonormalize(simd_double4x4 M);
 
-// TODO: float4x4_frustum
+simd_half4x4 SIMD_CFUNC simd_half4x4_frustum(simd_half4x4 M, simd_half1 l, simd_half1 r, simd_half1 b, simd_half1 t, simd_half1 n, simd_half1 f);
+simd_float4x4 SIMD_CFUNC simd_float4x4_frustum(simd_float4x4 M, float l, float r, float b, float t, float n, float f);
+simd_double4x4 SIMD_CFUNC simd_double4x4_frustum(simd_double4x4 M, double l, double r, double b, double t, double n, double f);
 
 // TODO: float4x4_ortho
 
@@ -165,9 +169,19 @@ namespace simd {
     SIMD_CPPFUNC float4x4 zRotate(float angleRadians) { return ::simd_zRotate(angleRadians); }
     SIMD_CPPFUNC double4x4 zRotate(double angleRadians) { return ::simd_zRotate(angleRadians); }
 
-//    SIMD_CPPFUNC simd_float4x4 simd_float4x4_orthonormalize(simd_float4x4 R, simd_float4x4 const M) { return ::simd_float4x4_orthonormalize(R, M); };
+    SIMD_CPPFUNC half3x3 simd_half4x4_orthonormalize(half4x4 M) { return ::simd_half4x4_orthonormalize(M); };
+    SIMD_CPPFUNC float3x3 simd_float4x4_orthonormalize(float4x4 M) { return ::simd_float4x4_orthonormalize(M); };
+    SIMD_CPPFUNC double3x3 simd_double4x4_orthonormalize(double4x4 M) { return ::simd_double4x4_orthonormalize(M); };
 
-
+    SIMD_CPPFUNC half4x4 simd_half4x4_frustum(half4x4 M, half1 l, half1 r, half1 b, half1 t, half1 n, half1 f) {
+        return ::simd_half4x4_frustum(M, l, r, b, t, n, f);
+    };
+    SIMD_CPPFUNC float4x4 simd_float4x4_frustum(float4x4 M, float l, float r, float b, float t, float n, float f) {
+        return ::simd_float4x4_frustum(M, l, r, b, t, n, f);
+    };
+    SIMD_CPPFUNC double4x4 simd_double4x4_frustum(double4x4 M, double l, double r, double b, double t, double n, double f) {
+        return ::simd_double4x4_frustum(M, l, r, b, t, n, f);
+    };
 
     SIMD_CPPFUNC half4x4 perspective(half1 fovYRadians, half1 aspectRatio, half1 nearPlane, half1 farPlane) {
         return ::simd_perspective(fovYRadians, aspectRatio, nearPlane, farPlane);
@@ -377,15 +391,136 @@ simd_double4x4 SIMD_CFUNC simd_zRotate(double angleRadians)
                                  (simd_double4){ 0.0f, 0.0f, 0.0f, 1.0f });
 }
 
-// TODO: Implement
-/// [Gram-Schmidt](https://en.wikipedia.org/wiki/Gram%E2%80%93Schmidt_process)
-simd_float4x4 SIMD_CFUNC simd_float4x4_orthonormalize(simd_float4x4 M)
+// TODO: Tests; For different sizes
+simd_half3x3 SIMD_CFUNC simd_half4x4_orthonormalize(simd_half4x4 M)
 {
-
-    return matrix_identity_float4x4;
+    simd_half3x3 R = simd_matrix(M.columns[0].xyz, M.columns[1].xyz, M.columns[2].xyz);
+    simd_half1 s = 1.0f;
+    simd_half3 h;
+    
+    R.columns[2] = simd_normalize(R.columns[2]);
+    
+    s = simd_dot(R.columns[1], R.columns[2]);
+    h = R.columns[2] * s;
+    R.columns[1] = R.columns[1] - h;
+    R.columns[1] = simd_normalize(R.columns[1]);
+    
+    s = simd_dot(R.columns[0], R.columns[2]);
+    h = R.columns[2] * s;
+    R.columns[0] = R.columns[0] - h;
+    
+    s = simd_dot(R.columns[0], R.columns[1]);
+    h = R.columns[1] * s;
+    R.columns[0] = R.columns[0] - h;
+    R.columns[0] = simd_normalize(R.columns[0]);
+    
+    return R;
+}
+/// [Gram-Schmidt](https://en.wikipedia.org/wiki/Gram%E2%80%93Schmidt_process)
+simd_float3x3 SIMD_CFUNC simd_float4x4_orthonormalize(simd_float4x4 M)
+{
+    simd_float3x3 R = simd_matrix(M.columns[0].xyz, M.columns[1].xyz, M.columns[2].xyz);
+    float s = 1.0f;
+    simd_float3 h;
+    
+    R.columns[2] = simd_normalize(R.columns[2]);
+    
+    s = simd_dot(R.columns[1], R.columns[2]);
+    h = R.columns[2] * s;
+    R.columns[1] = R.columns[1] - h;
+    R.columns[1] = simd_normalize(R.columns[1]);
+    
+    s = simd_dot(R.columns[0], R.columns[2]);
+    h = R.columns[2] * s;
+    R.columns[0] = R.columns[0] - h;
+    
+    s = simd_dot(R.columns[0], R.columns[1]);
+    h = R.columns[1] * s;
+    R.columns[0] = R.columns[0] - h;
+    R.columns[0] = simd_normalize(R.columns[0]);
+    
+    return R;
+}
+simd_double3x3 SIMD_CFUNC simd_double4x4_orthonormalize(simd_double4x4 M)
+{
+    simd_double3x3 R = simd_matrix(M.columns[0].xyz, M.columns[1].xyz, M.columns[2].xyz);
+    double s = 1.0f;
+    simd_double3 h;
+    
+    R.columns[2] = simd_normalize(R.columns[2]);
+    
+    s = simd_dot(R.columns[1], R.columns[2]);
+    h = R.columns[2] * s;
+    R.columns[1] = R.columns[1] - h;
+    R.columns[1] = simd_normalize(R.columns[1]);
+    
+    s = simd_dot(R.columns[0], R.columns[2]);
+    h = R.columns[2] * s;
+    R.columns[0] = R.columns[0] - h;
+    
+    s = simd_dot(R.columns[0], R.columns[1]);
+    h = R.columns[1] * s;
+    R.columns[0] = R.columns[0] - h;
+    R.columns[0] = simd_normalize(R.columns[0]);
+    
+    return R;
 }
 
-
+// TODO: Tests
+simd_half4x4 SIMD_CFUNC simd_half4x4_frustum(simd_half4x4 M, simd_half1 l, simd_half1 r, simd_half1 b, simd_half1 t, simd_half1 n, simd_half1 f)
+{
+    M.columns[0].x = 2.0f * n / (r-l);
+    M.columns[0].y = M.columns[0].z = M.columns[0].a = 0.0f;
+    
+    M.columns[1].y = 2.0f * n / (t-b);
+    M.columns[1].x = M.columns[1].z = M.columns[1].a = 0.0f;
+    
+    M.columns[2].x = +(r+l) / (r-l);
+    M.columns[2].y = +(t+b) / (t-b);
+    M.columns[2].z = -(f+n) / (f-n);
+    M.columns[2].a = -1.0f;
+    
+    M.columns[3].z = -2.0f * (f*n) / (f-n);
+    M.columns[3].x = M.columns[3].y = M.columns[3].a = 0.0f;
+    
+    return M;
+}
+simd_float4x4 SIMD_CFUNC simd_float4x4_frustum(simd_float4x4 M, float l, float r, float b, float t, float n, float f)
+{
+    M.columns[0].x = 2.0f * n / (r-l);
+    M.columns[0].y = M.columns[0].z = M.columns[0].a = 0.0f;
+    
+    M.columns[1].y = 2.0f * n / (t-b);
+    M.columns[1].x = M.columns[1].z = M.columns[1].a = 0.0f;
+    
+    M.columns[2].x = +(r+l) / (r-l);
+    M.columns[2].y = +(t+b) / (t-b);
+    M.columns[2].z = -(f+n) / (f-n);
+    M.columns[2].a = -1.0f;
+    
+    M.columns[3].z = -2.0f * (f*n) / (f-n);
+    M.columns[3].x = M.columns[3].y = M.columns[3].a = 0.0f;
+    
+    return M;
+}
+simd_double4x4 SIMD_CFUNC simd_double4x4_frustum(simd_double4x4 M, double l, double r, double b, double t, double n, double f)
+{
+    M.columns[0].x = 2.0f * n / (r-l);
+    M.columns[0].y = M.columns[0].z = M.columns[0].a = 0.0f;
+    
+    M.columns[1].y = 2.0f * n / (t-b);
+    M.columns[1].x = M.columns[1].z = M.columns[1].a = 0.0f;
+    
+    M.columns[2].x = +(r+l) / (r-l);
+    M.columns[2].y = +(t+b) / (t-b);
+    M.columns[2].z = -(f+n) / (f-n);
+    M.columns[2].a = -1.0f;
+    
+    M.columns[3].z = -2.0f * (f*n) / (f-n);
+    M.columns[3].x = M.columns[3].y = M.columns[3].a = 0.0f;
+    
+    return M;
+}
 
 // TODO: Tests
 simd_half4x4 SIMD_CFUNC simd_perspective(simd_half1 fovYRadians, simd_half1 aspectRatio, simd_half1 nearPlane, simd_half1 farPlane)
