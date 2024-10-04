@@ -88,6 +88,10 @@ simd_half4x4 SIMD_CFUNC simd_translate(simd_half3 v);
 simd_float4x4 SIMD_CFUNC simd_translate(simd_float3 v);
 simd_double4x4 SIMD_CFUNC simd_translate(simd_double3 v);
 
+simd_half4x4 SIMD_CFUNC simd_translateInPlace(simd_half4x4 M, simd_half3 v);
+simd_float4x4 SIMD_CFUNC simd_translateInPlace(simd_float4x4 M, simd_float3 v);
+simd_double4x4 SIMD_CFUNC simd_translateInPlace(simd_double4x4 M, simd_double3 v);
+
 // TODO: float4x4_from_vec3_mul_outer
 
 simd_half4x4 SIMD_CFUNC simd_xRotate(simd_half1 angleRadians);
@@ -112,7 +116,9 @@ simd_half4x4 SIMD_CFUNC simd_perspective(simd_half1 fovYRadians, simd_half1 aspe
 simd_float4x4 SIMD_CFUNC simd_perspective(float fovYRadians, float aspectRatio, float nearPlane, float farPlane);
 simd_double4x4 SIMD_CFUNC simd_perspective(double fovYRadians, double aspectRatio, double nearPlane, double farPlane);
 
-// TODO: float4x4_look_at
+simd_half4x4 SIMD_CFUNC simd_lookAt(simd_half3 const eye, simd_half3 const center, simd_half3 const up);
+simd_float4x4 SIMD_CFUNC simd_lookAt(simd_float3 const eye, simd_float3 const center, simd_float3 const up);
+simd_double4x4 SIMD_CFUNC simd_lookAt(simd_double3 const eye, simd_double3 const center, simd_double3 const up);
 
 // TODO: quat_conj - already exists?
 
@@ -143,6 +149,10 @@ namespace simd {
     SIMD_CPPFUNC float4x4 translate(const float3 &v) { return ::simd_translate(v); }
     SIMD_CPPFUNC double4x4 translate(const double3 &v) { return ::simd_translate(v); }
 
+    SIMD_CPPFUNC half4x4 simd_translateInPlace(half4x4 M, half3 v) { return ::simd_translateInPlace(M, v); }
+    SIMD_CPPFUNC float4x4 simd_translateInPlace(float4x4 M, float3 v) { return ::simd_translateInPlace(M, v); }
+    SIMD_CPPFUNC double4x4 simd_translateInPlace(double4x4 M, double3 v) { return ::simd_translateInPlace(M, v); }
+
     SIMD_CPPFUNC half4x4 xRotate(half1 angleRadians) { return ::simd_xRotate(angleRadians); }
     SIMD_CPPFUNC float4x4 xRotate(float angleRadians) { return ::simd_xRotate(angleRadians); }
     SIMD_CPPFUNC double4x4 xRotate(double angleRadians) { return ::simd_xRotate(angleRadians); }
@@ -167,6 +177,16 @@ namespace simd {
     }
     SIMD_CPPFUNC double4x4 perspective(double fovYRadians, double aspectRatio, double nearPlane, double farPlane) {
         return ::simd_perspective(fovYRadians, aspectRatio, nearPlane, farPlane);
+    }
+
+    SIMD_CPPFUNC half4x4 lookAt(half3 const eye, half3 const center, half3 const up) {
+        return ::simd_lookAt(eye, center, up);
+    }
+    SIMD_CPPFUNC float4x4 lookAt(float3 const eye, float3 const center, float3 const up) {
+        return ::simd_lookAt(eye, center, up);
+    }
+    SIMD_CPPFUNC double4x4 lookAt(double3 const eye, double3 const center, double3 const up) {
+        return ::simd_lookAt(eye, center, up);
     }
 
 }
@@ -212,6 +232,65 @@ simd_double4x4 SIMD_CFUNC simd_translate(simd_double3 v)
     const simd_double4 col2 = { 0.0f, 0.0f, 1.0f, 0.0f };
     const simd_double4 col3 = { v.x,   v.y,  v.z, 1.0f };
     return simd_matrix(col0, col1, col2, col3);
+}
+
+// TODO: Tests
+simd_half4x4 SIMD_CFUNC simd_translateInPlace(simd_half4x4 M, simd_half3 v)
+{
+    const simd_half4 t = {v.x, v.y, v.z, 0};
+    
+    const simd_half4x4 tM = simd_transpose(M);
+    
+    const simd_half4 row1 = tM.columns[0];
+    const simd_half4 row2 = tM.columns[1];
+    const simd_half4 row3 = tM.columns[2];
+    const simd_half4 row4 = tM.columns[3];
+    
+    const simd_half1 res1 = simd_dot(t, row1);
+    const simd_half1 res2 = simd_dot(t, row2);
+    const simd_half1 res3 = simd_dot(t, row3);
+    const simd_half1 res4 = simd_dot(t, row4);
+    
+    M.columns[3] = (simd_half4){ res1, res2, res3, res4 };
+    return M;
+}
+simd_float4x4 SIMD_CFUNC simd_translateInPlace(simd_float4x4 M, simd_float3 v)
+{
+    const simd_float4 t = {v.x, v.y, v.z, 0};
+    
+    const simd_float4x4 tM = simd_transpose(M);
+    
+    const simd_float4 row1 = tM.columns[0];
+    const simd_float4 row2 = tM.columns[1];
+    const simd_float4 row3 = tM.columns[2];
+    const simd_float4 row4 = tM.columns[3];
+    
+    const float res1 = simd_dot(t, row1);
+    const float res2 = simd_dot(t, row2);
+    const float res3 = simd_dot(t, row3);
+    const float res4 = simd_dot(t, row4);
+    
+    M.columns[3] = (simd_float4){ res1, res2, res3, res4 };
+    return M;
+}
+simd_double4x4 SIMD_CFUNC simd_translateInPlace(simd_double4x4 M, simd_double3 v)
+{
+    const simd_double4 t = {v.x, v.y, v.z, 0};
+    
+    const simd_double4x4 tM = simd_transpose(M);
+    
+    const simd_double4 row1 = tM.columns[0];
+    const simd_double4 row2 = tM.columns[1];
+    const simd_double4 row3 = tM.columns[2];
+    const simd_double4 row4 = tM.columns[3];
+    
+    const double res1 = simd_dot(t, row1);
+    const double res2 = simd_dot(t, row2);
+    const double res3 = simd_dot(t, row3);
+    const double res4 = simd_dot(t, row4);
+    
+    M.columns[3] = (simd_double4){ res1, res2, res3, res4 };
+    return M;
 }
 
 simd_half4x4 SIMD_CFUNC simd_xRotate(simd_half1 angleRadians)
@@ -350,6 +429,67 @@ simd_double4x4 SIMD_CFUNC simd_perspective(double fovYRadians, double aspectRati
     const simd_double4 col2 = { 0.0f, 0.0f, (farPlane + nearPlane) / (nearPlane - farPlane), (2.0f * farPlane * nearPlane) / (nearPlane - farPlane) };
     const simd_double4 col3 = { 0.0f, 0.0f, -1.0f, 0.0f };
     return simd_matrix(col0, col1, col2, col3);
+}
+
+// TODO: Tests
+simd_half4x4 SIMD_CFUNC simd_lookAt(simd_half3 const eye, simd_half3 const center, simd_half3 const up)
+{
+    simd_half3 f = center - eye;
+    f = simd_normalize(f);
+    
+    simd_half3 s = f * up;
+    s = simd_normalize(s);
+    
+    const simd_half3 t = s * f;
+    
+    const simd_half4 col0 = {  s.x,  t.x, -f.x, 0.0f };
+    const simd_half4 col1 = {  s.y,  t.y, -f.y, 0.0f };
+    const simd_half4 col2 = {  s.z,  t.z, -f.z, 0.0f };
+    const simd_half4 col3 = { 0.0f, 0.0f, 0.0f, 1.0f };
+    simd_half4x4 m = simd_matrix(col0, col1, col2, col3);
+    
+    return simd_translateInPlace(m, -eye);
+}
+/**
+ Adapted from Android's OpenGL `Matrix.java`.
+ See the OpenGL GLUT documentation for gluLookAt for a description
+ of the algorithm. We implement it in a straightforward way:
+ */
+simd_float4x4 SIMD_CFUNC simd_lookAt(simd_float3 const eye, simd_float3 const center, simd_float3 const up)
+{
+    simd_float3 f = center - eye;
+    f = simd_normalize(f);
+    
+    simd_float3 s = f * up;
+    s = simd_normalize(s);
+    
+    const simd_float3 t = s * f;
+    
+    const simd_float4 col0 = {  s.x,  t.x, -f.x, 0.0f };
+    const simd_float4 col1 = {  s.y,  t.y, -f.y, 0.0f };
+    const simd_float4 col2 = {  s.z,  t.z, -f.z, 0.0f };
+    const simd_float4 col3 = { 0.0f, 0.0f, 0.0f, 1.0f };
+    simd_float4x4 m = simd_matrix(col0, col1, col2, col3);
+    
+    return simd_translateInPlace(m, -eye);
+}
+simd_double4x4 SIMD_CFUNC simd_lookAt(simd_double3 const eye, simd_double3 const center, simd_double3 const up)
+{
+    simd_double3 f = center - eye;
+    f = simd_normalize(f);
+    
+    simd_double3 s = f * up;
+    s = simd_normalize(s);
+    
+    const simd_double3 t = s * f;
+    
+    const simd_double4 col0 = {  s.x,  t.x, -f.x, 0.0f };
+    const simd_double4 col1 = {  s.y,  t.y, -f.y, 0.0f };
+    const simd_double4 col2 = {  s.z,  t.z, -f.z, 0.0f };
+    const simd_double4 col3 = { 0.0f, 0.0f, 0.0f, 1.0f };
+    simd_double4x4 m = simd_matrix(col0, col1, col2, col3);
+    
+    return simd_translateInPlace(m, -eye);
 }
 
 #ifdef __cplusplus
