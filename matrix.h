@@ -106,6 +106,10 @@ simd_half4x4 SIMD_CFUNC simd_zRotate(simd_half1 tangleRadians);
 simd_float4x4 SIMD_CFUNC simd_zRotate(float angleRadians);
 simd_double4x4 SIMD_CFUNC simd_zRotate(double angleRadians);
 
+simd_half4x4 SIMD_CFUNC simd_half4x4_rotate(simd_half4x4 M, const simd_half3 rotationAxis, simd_half1 angle);
+simd_float4x4 SIMD_CFUNC simd_float4x4_rotate(simd_float4x4 M, const simd_float3 rotationAxis, float angle);
+simd_double4x4 SIMD_CFUNC simd_double4x4_rotate(simd_double4x4 M, const simd_double3 rotationAxis, double angle);
+
 simd_half3x3 SIMD_CFUNC simd_half4x4_orthonormalize(simd_half4x4 M);
 simd_float3x3 SIMD_CFUNC simd_float4x4_orthonormalize(simd_float4x4 M);
 simd_double3x3 SIMD_CFUNC simd_double4x4_orthonormalize(simd_double4x4 M);
@@ -170,6 +174,16 @@ namespace simd {
     SIMD_CPPFUNC half4x4 zRotate(half1 angleRadians) { return ::simd_zRotate(angleRadians); }
     SIMD_CPPFUNC float4x4 zRotate(float angleRadians) { return ::simd_zRotate(angleRadians); }
     SIMD_CPPFUNC double4x4 zRotate(double angleRadians) { return ::simd_zRotate(angleRadians); }
+
+    SIMD_CPPFUNC half4x4 simd_half4x4_rotate(half4x4 M, const half3 rotationAxis, half1 angle) {
+        return ::simd_half4x4_rotate(M, rotationAxis, angle);
+    }
+    SIMD_CPPFUNC float4x4 simd_float4x4_rotate(float4x4 M, const float3 rotationAxis, float angle) {
+        return ::simd_float4x4_rotate(M, rotationAxis, angle);
+    }
+    SIMD_CPPFUNC double4x4 simd_double4x4_rotate(double4x4 M, const double3 rotationAxis, double angle) {
+        return ::simd_double4x4_rotate(M, rotationAxis, angle);
+    }
 
     SIMD_CPPFUNC half3x3 half4x4_orthonormalize(half4x4 M) { return ::simd_half4x4_orthonormalize(M); };
     SIMD_CPPFUNC float3x3 float4x4_orthonormalize(float4x4 M) { return ::simd_float4x4_orthonormalize(M); };
@@ -317,6 +331,173 @@ simd_double4x4 SIMD_CFUNC simd_translateInPlace(simd_double4x4 M, simd_double3 v
     
     M.columns[3] = (simd_double4){ res1, res2, res3, res4 };
     return M;
+}
+
+simd_half4x4 SIMD_CFUNC simd_half4x4_rotate(simd_half4x4 M, const simd_half3 rotationAxis, simd_half1 angle)
+{
+    simd_half1 s = sinf(angle);
+    simd_half1 c = cosf(angle);
+    
+    // Create a normalized rotation axis
+    simd_half3 u = simd_normalize((simd_half3){rotationAxis.x, rotationAxis.y, rotationAxis.z});
+    
+    // If the length of the vector is not negligible, proceed with rotation
+    if (simd_length(u) > 1e-4f) {
+        simd_half1 ux = u.x;
+        simd_half1 uy = u.y;
+        simd_half1 uz = u.z;
+
+        // Compute the outer product of the vector with itself
+        // TODO: Create an optimized method for this
+        simd_half4x4 T = simd_matrix_from_rows(
+            (simd_half4){ ux * ux, ux * uy, ux * uz, 0.0f },
+            (simd_half4){ uy * ux, uy * uy, uy * uz, 0.0f },
+            (simd_half4){ uz * ux, uz * uy, uz * uz, 0.0f },
+            (simd_half4){    0.0f,    0.0f,    0.0f, 0.0f });
+
+        // Compute the skew-symmetric matrix
+        simd_half4x4 S = simd_matrix_from_rows(
+            (simd_half4){ 0.0f,  -uz,   uy, 0.0f },
+            (simd_half4){   uz, 0.0f,  -ux, 0.0f },
+            (simd_half4){  -uy,   ux, 0.0f, 0.0f },
+            (simd_half4){ 0.0f, 0.0f, 0.0f, 0.0f });
+
+        // Scale S by sin(angle)
+        S = simd_mul(s, S);
+
+        // Create the identity matrix and subtract T from it
+        simd_half4x4 C = matrix_identity_half4x4;
+        C.columns[0].xyz -= T.columns[0].xyz;
+        C.columns[1].xyz -= T.columns[1].xyz;
+        C.columns[2].xyz -= T.columns[2].xyz;
+
+        // Scale C by cos(angle)
+        C = simd_mul(c, C);
+
+        // Combine T with C & S
+        T = simd_add(T, C);
+        T = simd_add(T, S);
+
+        // The last column remains unchanged in the transformation matrix
+        T.columns[3] = (simd_half4){ 0.0f, 0.0f, 0.0f, 1.0f };
+
+        // Multiply M by the rotation matrix T
+        return simd_mul(M, T);
+    } else {
+        // If the axis is negligible, return the original matrix
+        return M;
+    }
+}
+// !!!: Tests
+simd_float4x4 SIMD_CFUNC simd_float4x4_rotate(simd_float4x4 M, const simd_float3 rotationAxis, float angle)
+{
+    float s = sinf(angle);
+    float c = cosf(angle);
+    
+    // Create a normalized rotation axis
+    simd_float3 u = simd_normalize((simd_float3){rotationAxis.x, rotationAxis.y, rotationAxis.z});
+    
+    // If the length of the vector is not negligible, proceed with rotation
+    if (simd_length(u) > 1e-4f) {
+        float ux = u.x;
+        float uy = u.y;
+        float uz = u.z;
+
+        // Compute the outer product of the vector with itself
+        // TODO: Create an optimized method for this
+        simd_float4x4 T = simd_matrix_from_rows(
+            (simd_float4){ ux * ux, ux * uy, ux * uz, 0.0f },
+            (simd_float4){ uy * ux, uy * uy, uy * uz, 0.0f },
+            (simd_float4){ uz * ux, uz * uy, uz * uz, 0.0f },
+            (simd_float4){    0.0f,    0.0f,    0.0f, 0.0f });
+
+        // Compute the skew-symmetric matrix
+        simd_float4x4 S = simd_matrix_from_rows(
+            (simd_float4){ 0.0f,  -uz,   uy, 0.0f },
+            (simd_float4){   uz, 0.0f,  -ux, 0.0f },
+            (simd_float4){  -uy,   ux, 0.0f, 0.0f },
+            (simd_float4){ 0.0f, 0.0f, 0.0f, 0.0f });
+
+        // Scale S by sin(angle)
+        S = simd_mul(s, S);
+
+        // Create the identity matrix and subtract T from it
+        simd_float4x4 C = matrix_identity_float4x4;
+        C.columns[0].xyz -= T.columns[0].xyz;
+        C.columns[1].xyz -= T.columns[1].xyz;
+        C.columns[2].xyz -= T.columns[2].xyz;
+
+        // Scale C by cos(angle)
+        C = simd_mul(c, C);
+
+        // Combine T with C & S
+        T = simd_add(T, C);
+        T = simd_add(T, S);
+
+        // The last column remains unchanged in the transformation matrix
+        T.columns[3] = (simd_float4){ 0.0f, 0.0f, 0.0f, 1.0f };
+
+        // Multiply M by the rotation matrix T
+        return simd_mul(M, T);
+    } else {
+        // If the axis is negligible, return the original matrix
+        return M;
+    }
+}
+simd_double4x4 SIMD_CFUNC simd_double4x4_rotate(simd_double4x4 M, const simd_double3 rotationAxis, double angle)
+{
+    double s = sinf(angle);
+    double c = cosf(angle);
+    
+    // Create a normalized rotation axis
+    simd_double3 u = simd_normalize((simd_double3){rotationAxis.x, rotationAxis.y, rotationAxis.z});
+    
+    // If the length of the vector is not negligible, proceed with rotation
+    if (simd_length(u) > 1e-4f) {
+        double ux = u.x;
+        double uy = u.y;
+        double uz = u.z;
+
+        // Compute the outer product of the vector with itself
+        // TODO: Create an optimized method for this
+        simd_double4x4 T = simd_matrix_from_rows(
+            (simd_double4){ ux * ux, ux * uy, ux * uz, 0.0f },
+            (simd_double4){ uy * ux, uy * uy, uy * uz, 0.0f },
+            (simd_double4){ uz * ux, uz * uy, uz * uz, 0.0f },
+            (simd_double4){    0.0f,    0.0f,    0.0f, 0.0f });
+
+        // Compute the skew-symmetric matrix
+        simd_double4x4 S = simd_matrix_from_rows(
+            (simd_double4){ 0.0f,  -uz,   uy, 0.0f },
+            (simd_double4){   uz, 0.0f,  -ux, 0.0f },
+            (simd_double4){  -uy,   ux, 0.0f, 0.0f },
+            (simd_double4){ 0.0f, 0.0f, 0.0f, 0.0f });
+
+        // Scale S by sin(angle)
+        S = simd_mul(s, S);
+
+        // Create the identity matrix and subtract T from it
+        simd_double4x4 C = matrix_identity_double4x4;
+        C.columns[0].xyz -= T.columns[0].xyz;
+        C.columns[1].xyz -= T.columns[1].xyz;
+        C.columns[2].xyz -= T.columns[2].xyz;
+
+        // Scale C by cos(angle)
+        C = simd_mul(c, C);
+
+        // Combine T with C & S
+        T = simd_add(T, C);
+        T = simd_add(T, S);
+
+        // The last column remains unchanged in the transformation matrix
+        T.columns[3] = (simd_double4){ 0.0f, 0.0f, 0.0f, 1.0f };
+
+        // Multiply M by the rotation matrix T
+        return simd_mul(M, T);
+    } else {
+        // If the axis is negligible, return the original matrix
+        return M;
+    }
 }
 
 simd_half4x4 SIMD_CFUNC simd_xRotate(simd_half1 angleRadians)
